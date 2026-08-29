@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disaster Management DrillS</title>
+  
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; color: #ffffff; overflow-x: hidden; background-color: #000000; }
+
+    #intro-overlay {
+      position: fixed; inset: 0; background-color: #000000; z-index: 9999; pointer-events: auto;
+      transition: background-color 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #intro-overlay.fade-bg { background-color: transparent; opacity: 0; pointer-events: none; }
+
+    .hero-logo-box {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1.3); z-index: 10000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
+    }
+    .hero-logo-box.settled { top: 180px; transform: translate(-50%, -50%) scale(0.85); }
+
+    .logo-image {
+      width: 140px; height: auto; border-radius: 1.25rem; box-shadow: 0 0 35px rgba(255, 255, 255, 0.3); transition: box-shadow 0.8s ease;
+    }
+    .hero-logo-box.settled .logo-image { box-shadow: 0 0 25px rgba(255, 255, 255, 0.4), 0 0 50px rgba(245, 158, 11, 0.25); }
+
+    .logo-title-text {
+      color: #ffffff; font-weight: 900; font-size: 1.25rem; letter-spacing: 2px; text-transform: uppercase;
+      text-align: center; margin-top: 0.75rem; transition: filter 0.8s ease; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+    }
+    .hero-logo-box.settled .logo-title-text { filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 20px rgba(251, 191, 36, 0.4)); }
+
+    .logo-shine-sweep {
+      position: absolute; top: 0; left: -150%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.85) 50%, transparent 100%);
+      transform: skewX(-25deg); animation: shineMove 2s ease-in-out; pointer-events: none; transition: opacity 0.5s ease;
+    }
+    @keyframes shineMove { 0% { left: -150%; } 100% { left: 150%; } }
+    .hero-logo-box.settled .logo-shine-sweep { animation: none; opacity: 0; }
+
+    .welcome-card {
+      opacity: 0; transform: scale(0.95) translateY(20px);
+      transition: opacity 1s ease 0.4s, transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
+    }
+    .welcome-card.visible { opacity: 1; transform: scale(1) translateY(0); }
+
+    /* Mascot */
+    .mascot-container { position: fixed; bottom: 20px; right: 20px; z-index: 50; }
+    .mascot-char { width: 100px; height: 125px; position: relative; }
+    .army-head { width: 50px; height: 52px; border-radius: 50%; background: #e0ac69; position: absolute; top: 10px; left: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 2; }
+    .army-beret { position: absolute; top: -12px; left: -5px; width: 58px; height: 26px; background: #1e3a1e; border-radius: 20px 20px 6px 12px; transform: rotate(-8deg); box-shadow: 0 3px 8px rgba(0,0,0,0.5); }
+    .army-insignia { position: absolute; top: 5px; left: 14px; width: 10px; height: 10px; background: #fbbf24; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+    .army-body { width: 46px; height: 48px; background: linear-gradient(135deg, #4b5320 25%, #3b3a1e 25%, #3b3a1e 50%, #2e3312 50%, #2e3312 75%, #4b5320 75%); background-size: 16px 16px; border-radius: 12px 12px 4px 4px; position: absolute; bottom: 22px; left: 27px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); border-top: 3px solid #fbbf24; }
+    .army-arm-l, .army-arm-r { width: 12px; height: 36px; background: #4b5320; border-radius: 6px; position: absolute; bottom: 30px; transition: transform 0.3s ease; transform-origin: top center; }
+    .army-arm-l { left: 14px; } .army-arm-r { right: 14px; }
+    .army-legs { display: flex; gap: 12px; position: absolute; bottom: 4px; left: 33px; }
+    .army-boot { width: 14px; height: 20px; background: #111827; border-radius: 4px 4px 6px 6px; box-shadow: 0 3px 6px rgba(0,0,0,0.6); }
+    .army-eyes { display: flex; gap: 10px; position: absolute; top: 22px; left: 12px; }
+    .army-eye { width: 7px; height: 7px; background: #1a1a2e; border-radius: 50%; }
+    .army-mustache { width: 22px; height: 6px; background: #261c14; border-radius: 3px 3px 8px 8px; position: absolute; top: 32px; left: 14px; }
+    .army-speech { position: absolute; bottom: 130px; right: 0; background: rgba(15, 23, 42, 0.95); color: #f8fafc; border: 2px solid #fbbf24; padding: 10px 16px; border-radius: 16px; font-size: 13px; font-weight: 800; white-space: nowrap; box-shadow: 0 8px 25px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(8px); backdrop-filter: blur(8px); }
+    .army-speech.show { opacity: 1; transform: translateY(0); }
+    .army-speech::after { content: ''; position: absolute; bottom: -8px; right: 32px; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 8px solid #fbbf24; }
+
+    @keyframes armyIdle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+    .mascot-idle .mascot-char { animation: armyIdle 3s ease-in-out infinite; }
+    @keyframes armySalute { 0% { transform: scale(1); } 30% { transform: translateY(-12px) scale(1.05); } 100% { transform: scale(1); } }
+    .mascot-happy .mascot-char { animation: armySalute 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .mascot-happy .army-arm-r { transform: rotate(-135deg) translateY(-4px) translateX(6px); }
+    .mascot-happy .army-arm-l { transform: rotate(15deg); }
+
+    /* Badges & Cards */
+    .icon-badge-3d { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 18px; background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05)); border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
+    .icon-badge-3d svg, .icon-badge-3d span { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+
+    .level-card { position: relative; border-radius: 1.25rem; overflow: hidden; transition: transform 0.15s ease-out, box-shadow 0.3s ease; border: 2px solid rgba(255, 255, 255, 0.1); transform-style: preserve-3d; will-change: transform; }
+    .level-card:hover:not(.locked) { box-shadow: 0 15px 45px rgba(251, 191, 36, 0.35); border-color: rgba(251, 191, 36, 0.6); }
+    .level-card.locked { opacity: 0.35; filter: grayscale(0.8); cursor: not-allowed; }
+    .level-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%); z-index: 1; }
+    .level-card-content { position: relative; z-index: 2; transform: translateZ(20px); }
+    .level-badge { position: absolute; top: 12px; right: 12px; z-index: 3; }
+    .level-icon { position: absolute; top: 12px; left: 12px; z-index: 3; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); transform: translateZ(30px); }
+
+    .level-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent); transform: skewX(-20deg); transition: left 0.6s ease; z-index: 4; }
+    .level-card:hover::after { left: 150%; }
+
+    @keyframes cardPulse { 0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0)} 50%{box-shadow:0 0 20px 4px rgba(251,191,36,0.3)} }
+    .level-card.current-level { animation: cardPulse 2s infinite; border-color: rgba(251,191,36,0.6); }
+
+    .stat-card { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 1.25rem; padding: 1.5rem; text-align: center; animation: fadeIn 0.5s ease both; backdrop-filter: blur(12px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+    .stat-card:hover { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.6); transform: translateY(-4px); box-shadow: 0 10px 30px rgba(245, 158, 11, 0.25); }
+    .stat-card:hover .icon-badge-3d { transform: scale(1.2) rotate(-6deg); border-color: rgba(251, 191, 36, 0.8); box-shadow: 0 12px 25px rgba(245, 158, 11, 0.4); }
+    .stat-value { font-size: 2.5rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .stat-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; margin-top: 0.5rem; }
+    .stat-bar-fill { height: 100%; border-radius: 4px; transition: width 1.5s cubic-bezier(0.4,0,0.2,1); }
+
+    .drill-rate-row { padding: 0.5rem 0.75rem; border-radius: 0.75rem; transition: all 0.25s ease; }
+    .drill-rate-row:hover { background: rgba(245, 158, 11, 0.12); transform: translateX(4px); }
+
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
+    .bounce-in { animation: bounceIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55); }
+    @keyframes bounceIn { from{transform:scale(0)} to{transform:scale(1)} }
+    .correct-flash { animation: correctFlash 0.6s; }
+    @keyframes correctFlash { 0%{background:rgba(34,197,94,0.4)} 100%{background:transparent} }
+    .wrong-flash { animation: wrongFlash 0.6s; }
+    @keyframes wrongFlash { 0%{background:rgba(239,68,68,0.4)} 100%{background:transparent} }
+    .slide-in { animation: slideIn 0.3s ease both; }
+    @keyframes slideIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+    .progress-fill { transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+    .particle { position:fixed; pointer-events:none; z-index:100; font-size:24px; animation:particleFly 1.2s ease-out forwards; }
+    @keyframes particleFly { 0%{opacity:1;transform:translateY(0) scale(1) rotate(0deg)} 100%{opacity:0;transform:translateY(-120px) scale(0.2) rotate(240deg)} }
+    .confetti { position:fixed; pointer-events:none; z-index:100; width:8px; height:8px; border-radius:2px; }
+    @keyframes confettiFall { 0%{opacity:1;transform:translateY(0) rotate(0deg)} 100%{opacity:0;transform:translateY(120px) rotate(720deg)} }
+  </style>
+</head>
+<body>
+
+  <div id="intro-overlay"></div>
+
+  <div id="hero-logo-box" class="hero-logo-box">
+    <img src="logo.jpg" alt="Disaster Management Logo" class="logo-image" />
+    <div class="logo-title-text">Disaster Management Drill</div>
+    <div class="logo-shine-sweep"></div>
+  </div>
+
+  <iframe id="bg-iframe" src="background.html" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; border: none; z-index: -1; pointer-events: none;"></iframe>
+
+  <div id="app-container" class="relative z-10 min-h-screen">
+    
+    <div id="mascot" class="mascot-container hidden mascot-idle">
+      <div class="army-speech" id="mascot-speech"></div>
+      <div class="mascot-char">
+        <div class="army-head">
+          <div class="army-beret"><div class="army-insignia"></div></div>
+          <div class="army-eyes"><div class="army-eye"></div><div class="army-eye"></div></div>
+          <div class="army-mustache"></div>
+        </div>
+        <div class="army-body"></div>
+        <div class="army-arm-l"></div>
+        <div class="army-arm-r"></div>
+        <div class="army-legs"><div class="army-boot"></div><div class="army-boot"></div></div>
+      </div>
+    </div>
+
+    <!-- VIEW 1: Welcome & Login Screen -->
+    <div id="welcome-screen" class="flex items-center justify-center min-h-screen p-6">
+      <div id="welcome-card" class="welcome-card text-center max-w-md w-full bg-black/40 p-8 rounded-3xl border border-white/10 backdrop-blur-md shadow-2xl flex flex-col items-center pt-52">
+
+        <p class="text-sm mb-6 text-slate-200 opacity-80">Train for emergencies. Level up your survival skills!</p>
+        
+        <form id="name-form" class="space-y-4 w-full">
+          <div>
+            <label class="block text-left text-sm font-medium mb-1 text-slate-300" for="player-name-input">Enter your name, hero</label> 
+            <input id="player-name-input" class="w-full px-4 py-3 rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-lg" type="text" required placeholder="Write your name...">
+          </div>
+
+          <!-- GPS Precise Location Button -->
+          <div>
+            <label class="block text-left text-sm font-medium mb-1 text-slate-300">Location Settings</label> 
+            
+            <button type="button" onclick="getPreciseGPSLocation()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/50 text-blue-300 font-bold text-sm flex items-center justify-center gap-2 transition shadow-lg mb-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-blue-400"></i> Use Current GPS Location (Exact)
+            </button>
+
+            <div id="gps-status" class="text-xs text-left text-amber-300/80 mb-2 font-mono hidden"></div>
+
+            <select id="region-select" class="w-full px-4 py-2.5 rounded-xl border-2 border-white/30 bg-slate-900/90 text-white focus:outline-none focus:border-yellow-400 text-sm" onchange="changeRegion(this.value)">
+              <option value="coastal">Coastal Region (Flood & Tsunami Priority)</option>
+              <option value="hilly">Hilly / Seismic Belt (Earthquake Priority)</option>
+              <option value="urban">Urban Zone (Fire & Emergency Priority)</option>
+            </select>
+          </div>
+          
+          <div class="flex gap-3 mt-3">
+            <button type="button" id="role-student-btn" class="flex-1 py-2.5 rounded-xl font-bold border-2 border-yellow-400 bg-yellow-400/20 text-yellow-300 transition flex items-center justify-center gap-2" onclick="selectRole('student')">
+              <i data-lucide="graduation-cap" class="w-5 h-5"></i> Student
+            </button> 
+            <button type="button" id="role-teacher-btn" class="flex-1 py-2.5 rounded-xl font-bold border-2 border-white/30 bg-white/5 text-white/60 transition flex items-center justify-center gap-2" onclick="selectRole('teacher')">
+              <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Teacher
+            </button>
+          </div>
+          
+          <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-lg mt-2 transition hover:brightness-110 text-white shadow-lg flex items-center justify-center gap-2" style="background: linear-gradient(135deg, rgb(245, 158, 11), rgb(239, 68, 68));">
+            <i data-lucide="rocket" class="w-5 h-5"></i> Start Training
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW 2: Student Game Dashboard -->
+    <div id="game-screen" class="hidden w-full max-w-2xl mx-auto py-6">
+      <header class="p-4 flex items-center justify-between bg-black/30 backdrop-blur-md rounded-2xl border border-white/10 mb-4">
+        <div>
+          <p id="player-greeting" class="font-bold text-white text-lg"></p>
+          <p class="text-xs text-slate-400">Total Score</p>
+          <p id="score-display" class="text-yellow-300 font-black text-2xl">0</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="showSOSModal()" class="px-3 py-1.5 rounded-xl bg-red-600/80 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-1 shadow-lg animate-pulse">
+            <i data-lucide="phone-call" class="w-4 h-4"></i> SOS Helpline
+          </button>
+          <div class="flex gap-2" id="badges-display"></div>
+        </div>
+      </header>
+
+      <div id="gps-alert-banner" class="hidden mx-4 mb-4 p-3 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center gap-3">
+        <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-400 flex-shrink-0 animate-bounce"></i>
+        <div class="text-left text-xs">
+          <p class="font-bold text-amber-300 text-sm" id="gps-zone-title">Precise Location Detected</p>
+          <p class="text-slate-200" id="gps-zone-desc">Alert: Higher vulnerability detected for Coastal Flood & Tsunami risks in your exact coordinates.</p>
+        </div>
+      </div>
+
+      <div class="px-4 mb-4">
+        <div class="flex justify-between mb-1">
+          <span class="text-xs font-medium text-slate-400">Overall Progress</span>
+          <span id="progress-text" class="text-xs text-white/70">0/5 Drills</span>
+        </div>
+        <div class="w-full h-4 bg-white/20 rounded-full overflow-hidden">
+          <div id="progress-bar" class="progress-fill h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div id="level-map-container" class="px-4 pb-8 space-y-4">
+        <h2 class="text-xl font-bold mb-3 text-white flex items-center justify-between">
+          <span>Choose Your Drill</span>
+          <span id="current-zone-tag" class="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300">Zone: COASTAL</span>
+        </h2>
+        
+        <!-- Dynamic Level Map (Re-ordered dynamically based on regional risk) -->
+        <div id="level-map" class="space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: Teacher Analytics Dashboard -->
+    <div id="teacher-screen" class="hidden w-full p-4 min-h-screen">
+      <div class="max-w-2xl mx-auto fade-in bg-black/40 p-6 rounded-3xl border border-white/10 backdrop-blur-md">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="font-black text-2xl text-white flex items-center gap-2">
+              <i data-lucide="bar-chart-2" class="w-6 h-6 text-amber-400"></i> Teacher Dashboard
+            </h2>
+            <p id="teacher-greeting" class="text-white/60 text-sm mt-1"></p>
+          </div>
+          <button onclick="logoutTeacher()" class="text-white/50 hover:text-white text-sm underline">← Back</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="stat-card">
+            <div class="icon-badge-3d mb-2"><i data-lucide="graduation-cap" class="w-6 h-6 text-amber-400"></i></div>
+            <div class="stat-value" id="stat-students">0</div>
+            <p class="text-slate-300 font-medium text-sm mt-1">Total Students</p>
+          </div>
+          <div class="stat-card">
+            <div class="icon-badge-3d mb-2"><i data-lucide="star" class="w-6 h-6 text-yellow-400"></i></div>
+            <div class="stat-value" id="stat-avg-score">0</div>
+            <p class="text-slate-300 font-medium text-sm mt-1">Avg Score</p>
+          </div>
+          <div class="stat-card">
+            <div class="icon-badge-3d mb-2"><i data-lucide="award" class="w-6 h-6 text-emerald-400"></i></div>
+            <div class="stat-value" id="stat-badges">0</div>
+            <p class="text-slate-300 font-medium text-sm mt-1">Badges Earned</p>
+          </div>
+          <div class="stat-card">
+            <div class="icon-badge-3d mb-2"><i data-lucide="check-circle-2" class="w-6 h-6 text-blue-400"></i></div>
+            <div class="stat-value" id="stat-drills">0</div>
+            <p class="text-slate-300 font-medium text-sm mt-1">Drills Done</p>
+          </div>
+        </div>
+
+        <h3 class="font-bold text-lg mb-3 text-white">Drill Completion Rates</h3>
+        <div class="space-y-3" id="drill-breakdown"></div>
+
+        <h3 class="font-bold text-lg mt-6 mb-3 text-white flex items-center gap-2">
+          <i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i> Leaderboard
+        </h3>
+        <div id="leaderboard" class="space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: Interactive Quiz Screen -->
+    <div id="drill-screen" class="hidden w-full p-4 min-h-screen flex items-center justify-center">
+      <div class="max-w-lg w-full mx-auto fade-in bg-black/40 p-6 rounded-3xl border border-white/10 backdrop-blur-md relative">
+        <div id="combo-banner" class="hidden absolute -top-4 right-6 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black text-xs px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1"></div>
+
+        <div class="flex items-center justify-between mb-4">
+          <button onclick="exitDrill()" class="text-white/70 hover:text-white flex items-center gap-1">
+            <i data-lucide="arrow-left" style="width:20px;height:20px"></i> Back
+          </button> 
+          <span id="drill-question-num" class="text-white/70 text-sm font-medium"></span>
+        </div>
+
+        <div class="w-full h-2 bg-white/20 rounded-full mb-5 overflow-hidden">
+          <div id="drill-progress" class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-500" style="width:0%"></div>
+        </div>
+
+        <h3 id="drill-question" class="text-white font-bold text-xl mb-5"></h3>
+        <div id="drill-options" class="space-y-3"></div>
+        <div id="drill-feedback" class="hidden mt-4 p-4 rounded-xl text-center font-bold text-lg"></div>
+        <button id="drill-next-btn" class="hidden w-full mt-4 py-3 rounded-xl bg-yellow-400 text-black font-bold text-lg hover:bg-yellow-300 transition" onclick="nextQuestion()">Next →</button>
+      </div>
+    </div>
+
+    <!-- VIEW 5: Results Screen -->
+    <div id="results-screen" class="hidden flex items-center justify-center p-6 min-h-screen">
+      <div class="text-center fade-in max-w-sm bg-black/40 p-8 rounded-3xl border border-white/10 backdrop-blur-md">
+        <div class="mb-4 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-500/20 border border-amber-400/40 shadow-xl" id="results-emoji-box">
+          <i data-lucide="trophy" class="w-10 h-10 text-amber-400"></i>
+        </div>
+        <h2 class="text-2xl font-black mb-2 text-white">Drill Complete!</h2>
+        <p id="results-score" class="text-yellow-300 text-3xl font-black mb-2"></p>
+        <p id="results-message" class="text-white/70 mb-6"></p>
+
+        <div id="results-badge-earned" class="hidden mb-6">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-900 font-bold shadow-lg bounce-in mb-2" id="new-badge-icon"></div>
+          <p class="text-sm font-medium text-amber-400">🎉 New Badge Earned!</p>
+        </div>
+
+        <button class="w-full py-3.5 rounded-xl font-bold text-lg transition hover:brightness-110 text-white shadow-lg" onclick="showGameScreen()" style="background: linear-gradient(135deg, rgb(245, 158, 11), rgb(239, 68, 68));">Continue Training →</button>
+      </div>
+    </div>
+
+    <!-- SOS Modal -->
+    <div id="sos-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="max-w-md w-full bg-slate-900 border border-red-500/40 p-6 rounded-3xl shadow-2xl text-left fade-in">
+        <div class="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+          <h3 class="text-xl font-bold text-red-400 flex items-center gap-2">
+            <i data-lucide="shield-alert" class="w-6 h-6"></i> Emergency Helpline Directory
+          </h3>
+          <button onclick="hideSOSModal()" class="text-white/50 hover:text-white">✕</button>
+        </div>
+
+        <div class="space-y-3 mb-6">
+          <a href="tel:112" class="flex items-center justify-between p-3 rounded-xl bg-red-500/20 border border-red-500/40 hover:bg-red-500/30 transition">
+            <div>
+              <p class="font-bold text-white text-base">National Emergency Number</p>
+              <p class="text-xs text-red-300">Police, Fire, Ambulance Unified</p>
+            </div>
+            <span class="font-black text-xl text-yellow-300">112</span>
+          </a>
+
+          <a href="tel:1078" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
+            <div>
+              <p class="font-bold text-white text-sm">NDMA Helpline (National)</p>
+              <p class="text-xs text-slate-400">Disaster Response Authority</p>
+            </div>
+            <span class="font-bold text-lg text-amber-400">1078</span>
+          </a>
+
+          <a href="tel:1070" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
+            <div>
+              <p class="font-bold text-white text-sm">State Relief Commissioner</p>
+              <p class="text-xs text-slate-400">Natural Calamity Response</p>
+            </div>
+            <span class="font-bold text-lg text-amber-400">1070</span>
+          </a>
+
+          <a href="tel:101" class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition">
+            <div>
+              <p class="font-bold text-white text-sm">Fire Force</p>
+              <p class="text-xs text-slate-400">Immediate Rescue</p>
+            </div>
+            <span class="font-bold text-lg text-amber-400">101</span>
+          </a>
+        </div>
+
+        <button onclick="hideSOSModal()" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition text-sm">Close Directory</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const overlay = document.getElementById('intro-overlay');
+        const heroBox = document.getElementById('hero-logo-box');
+        const welcomeCard = document.getElementById('welcome-card');
+
+        if (overlay) overlay.classList.add('fade-bg');
+        if (heroBox) heroBox.classList.add('settled');
+        if (welcomeCard) welcomeCard.classList.add('visible');
+      }, 1800);
+    });
+
+    const bgIframe = document.getElementById('bg-iframe');
+    window.addEventListener('mousemove', (e) => {
+      if (bgIframe && bgIframe.contentWindow) {
+        bgIframe.contentWindow.postMessage({
+          type: 'MOUSE_MOVE',
+          x: e.clientX,
+          y: e.clientY,
+          w: window.innerWidth,
+          h: window.innerHeight
+        }, '*');
+      }
+    });
+
+    function init3DCards() {
+      const cards = document.querySelectorAll('.level-card');
+      cards.forEach(card => {
+        card.addEventListener('mousemove', e => {
+          if (card.classList.contains('locked')) return;
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -12;
+          const rotateY = ((x - centerX) / centerX) * 12;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+        });
+      });
+    }
+
+    function animateNumber(element, start, end, duration) {
+      if (!element) return;
+      let startTime = null;
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        element.textContent = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+          element.textContent = end;
+        }
+      }
+      window.requestAnimationFrame(step);
+    }
+  </script>
+
+  <script>
+    // Master Disaster Module Database
+    const baseDrills = {
+      'Flood': { name:'Flood', icon:'waves', color:'cyan', image:'https://images.pexels.com/photos/28447774/pexels-photo-28447774.jpeg?auto=compress&cs=tinysrgb&w=800', desc:'Water Rescue & Safety', questions:[
+        {q:'Flash flood warning issued! Best action?', options:['Drive across the flooded road','Move immediately to higher ground','Wait and watch the water level','Swim to the nearest shelter'], correct:1},
+        {q:'What should you NEVER do during flooding?', options:['Move to upper floors','Listen to emergency radio','Walk through moving water','Store clean drinking water'], correct:2},
+        {q:'How much moving water can knock you off your feet?', options:['Waist-deep only','Just 6 inches (15cm)','Only if swimming','Knee-deep minimum'], correct:1},
+        {q:'After floodwaters recede, you should:', options:['Drink the tap water immediately','Avoid damaged buildings until inspected','Touch downed power lines to check','Ignore mould growth'], correct:1},
+        {q:'What supplies are essential for flood preparedness?', options:['Only sandwiches','Waterproof bags, torch, charged phone, water','A boat','Surfboard'], correct:1}
+      ]},
+      'Tsunami': { name:'Tsunami', icon:'wind', color:'teal', image:'https://images.pexels.com/photos/31996249/pexels-photo-31996249.jpeg?auto=compress&cs=tinysrgb&w=800', desc:'Coastal Alert & Evacuation', questions:[
+        {q:'You feel a strong earthquake near the coast. What next?', options:['Go to beach to watch waves','Move inland to high ground immediately','Wait for an official warning only','Hide under a desk near shore'], correct:1},
+        {q:'Which is a natural tsunami warning sign?', options:['Sky turns green','Ocean water recedes suddenly','Temperature drops sharply','Birds start singing'], correct:1},
+        {q:'How far inland should you move during a tsunami warning?', options:['Just off the beach','As far inland or high as possible','100 meters is always enough','Stay on a pier'], correct:1},
+        {q:'After first tsunami wave passes, is it safe to return?', options:['Yes, the danger is over','No, multiple waves can follow for hours','Only after 10 minutes','Yes, if water looks calm'], correct:1},
+        {q:'Best vertical evacuation during tsunami if you can\'t go inland?', options:['Top of a reinforced concrete building','A wooden hut','Under a bridge','In a basement'], correct:0}
+      ]},
+      'Earthquake': { name:'Earthquake', icon:'globe', color:'amber', image:'https://images.pexels.com/photos/18940342/pexels-photo-18940342.jpeg?auto=compress&cs=tinysrgb&w=800', desc:'Survival Basics', questions:[
+        {q:'During an earthquake, what should you do FIRST?', options:['Run outside immediately','Drop, Cover, and Hold On','Call emergency services','Stand near the window'], correct:1},
+        {q:'Which spot is safest during an earthquake indoors?', options:['Near large windows','Under a sturdy desk or table','Standing in a doorway','On the staircase'], correct:1},
+        {q:'After shaking stops, what is your priority?', options:['Check for injuries and hazards','Immediately re-enter buildings','Turn on all appliances','Go back to sleep'], correct:0},
+        {q:'What should you prepare in an earthquake kit?', options:['Only food','Water, flashlight, first-aid, radio','Just a phone charger','Expensive electronics'], correct:1},
+        {q:'If outdoors during an earthquake, you should:', options:['Run inside the nearest building','Stay in open area away from structures','Stand under a bridge','Climb a tree'], correct:1}
+      ]},
+      'Fire': { name:'Fire', icon:'flame', color:'orange', image:'https://images.pexels.com/photos/4741694/pexels-photo-4741694.jpeg?auto=compress&cs=tinysrgb&w=800', desc:'Fire Safety & Evacuation', questions:[
+        {q:'You smell smoke at home. What do you do first?', options:['Open the door quickly','Feel the door for heat before opening','Ignore it and wait','Jump from the window'], correct:1},
+        {q:'If your clothes catch fire, you should:', options:['Run as fast as you can','Stop, Drop, and Roll','Pour cold water while standing','Remove all clothes while running'], correct:1},
+        {q:'What is the correct way to escape a smoke-filled room?', options:['Walk upright normally','Crawl low under the smoke','Open windows for fresh air first','Run through quickly'], correct:1},
+        {q:'How often should you test smoke alarms?', options:['Once a year','Every month','Only when they beep','Never, they last forever'], correct:1},
+        {q:'Best meeting point after a house fire evacuation?', options:['Inside the house once fire is out','A pre-decided spot outside','The neighbour\'s roof','Anywhere nearby'], correct:1}
+      ]},
+      'Cyclone': { name:'Cyclone', icon:'cloud-lightning', color:'indigo', image:'https://images.pexels.com/photos/16313103/pexels-photo-16313103.jpeg?auto=compress&cs=tinysrgb&w=800', desc:'Storm Survival', questions:[
+        {q:'A cyclone warning is issued. You should:', options:['Go outside to watch','Secure loose objects and stay indoors','Drive to another city immediately','Open all windows to equalize pressure'], correct:1},
+        {q:'Safest place during a cyclone at home?', options:['Near large glass windows','Interior room away from windows','On the roof for visibility','In the garden shed'], correct:1},
+        {q:'What does the "eye" of the cyclone mean?', options:['The storm is over','Temporary calm; dangerous winds will resume','Time to go outside safely','The weakest part permanently'], correct:1},
+        {q:'Essential cyclone kit should include:', options:['Only candles','Torch, battery radio, water, first-aid, documents','Just snacks','A kite'], correct:1},
+        {q:'After cyclone passes, biggest danger is often:', options:['Nothing, it\'s safe immediately','Downed power lines and flooding','Sunshine','Cold weather'], correct:1}
+      ]}
+    };
+
+    // Regional Prioritization Mapping (Puts highest risk disaster FIRST)
+    const regionalPriorities = {
+      'coastal': ['Flood', 'Tsunami', 'Cyclone', 'Fire', 'Earthquake'],
+      'hilly': ['Earthquake', 'Cyclone', 'Fire', 'Flood', 'Tsunami'],
+      'urban': ['Fire', 'Flood', 'Earthquake', 'Cyclone', 'Tsunami']
+    };
+
+    let activeDrillsList = [];
+
+    function buildDrillListForRegion(regionKey) {
+      const order = regionalPriorities[regionKey] || regionalPriorities['coastal'];
+      activeDrillsList = order.map(name => baseDrills[name]);
+    }
+
+    const happyPhrases = ['Jai Hind! Excellent move, cadet! 🎖️','Attention! Correct action taken! 🫡','Outstanding reaction time, soldier! 💪','Tactical precision! Keep moving! 🚀','Victory favors the prepared! 🏆'];
+    const sadPhrases = ['Caution cadet! Stay alert! 🛡️','Review protocol and retry, soldier! 💭','Negative! Remember safety first! ⚠️','Hold position! Think fast! 😬'];
+
+    let playerData = null, currentDrill = -1, currentQ = 0, drillScore = 0, comboCount = 0;
+    let selectedRegion = 'coastal';
+    let selectedRole = 'student';
+    let userCoordinates = null;
+    let allData = JSON.parse(localStorage.getItem('dma_drill_data') || '[]');
+
+    buildDrillListForRegion(selectedRegion);
+
+    function saveState() {
+      localStorage.setItem('dma_drill_data', JSON.stringify(allData));
+    }
+
+    function getPreciseGPSLocation() {
+      const statusEl = document.getElementById('gps-status');
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = "📍 Requesting precise GPS coordinates from device...";
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude.toFixed(4);
+            const lon = position.coords.longitude.toFixed(4);
+            userCoordinates = { lat, lon };
+
+            statusEl.textContent = `✅ GPS Locked: ${lat}° N, ${lon}° E`;
+            
+            document.getElementById('gps-alert-banner').classList.remove('hidden');
+            document.getElementById('gps-zone-title').textContent = `Exact Location Detected (${lat}, ${lon})`;
+            document.getElementById('gps-zone-desc').textContent = `High-accuracy GPS active. Region prioritized for localized drills.`;
+          },
+          (error) => {
+            statusEl.textContent = `⚠️ GPS Access Denied. Using manual region selection.`;
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } else {
+        statusEl.textContent = `❌ Geolocation is not supported by your browser.`;
+      }
+    }
+
+    function changeRegion(region) {
+      selectedRegion = region;
+      document.getElementById('current-zone-tag').textContent = `Zone: ${region.toUpperCase()}`;
+      buildDrillListForRegion(region);
+      if (playerData) renderDrillLevels();
+    }
+
+    function showSOSModal() { document.getElementById('sos-modal').classList.remove('hidden'); }
+    function hideSOSModal() { document.getElementById('sos-modal').classList.add('hidden'); }
+
+    function selectRole(role) {
+      selectedRole = role;
+      const sBtn = document.getElementById('role-student-btn');
+      const tBtn = document.getElementById('role-teacher-btn');
+      if (role === 'student') {
+        sBtn.className = 'flex-1 py-2.5 rounded-xl font-bold border-2 border-yellow-400 bg-yellow-400/20 text-yellow-300 transition flex items-center justify-center gap-2';
+        tBtn.className = 'flex-1 py-2.5 rounded-xl font-bold border-2 border-white/30 bg-white/5 text-white/60 transition flex items-center justify-center gap-2';
+      } else {
+        tBtn.className = 'flex-1 py-2.5 rounded-xl font-bold border-2 border-yellow-400 bg-yellow-400/20 text-yellow-300 transition flex items-center justify-center gap-2';
+        sBtn.className = 'flex-1 py-2.5 rounded-xl font-bold border-2 border-white/30 bg-white/5 text-white/60 transition flex items-center justify-center gap-2';
+      }
+    }
+
+    function setMascot(mood, text) {
+      const m = document.getElementById('mascot');
+      m.className = 'mascot-container mascot-' + mood;
+      const sp = document.getElementById('mascot-speech');
+      sp.textContent = text;
+      sp.classList.add('show');
+      setTimeout(() => {
+        sp.classList.remove('show');
+        m.className = 'mascot-container mascot-idle';
+      }, 2600);
+    }
+
+    function spawnParticles(x, y) {
+      const emojis = ['✨','⭐','🔥','🛡️','💫','🎖️'];
+      for(let i=0; i<10; i++){
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        p.style.left = (x + Math.random() * 80 - 40) + 'px';
+        p.style.top = (y + Math.random() * 40 - 20) + 'px';
+        p.style.animationDuration = (0.8 + Math.random() * 0.6) + 's';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 1200);
+      }
+    }
+
+    function spawnConfetti() {
+      const colors = ['#fbbf24','#ef4444','#3b82f6','#10b981','#8b5cf6','#ec4899'];
+      for(let i=0; i<35; i++){
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + 'vw';
+        c.style.top = '-10px';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.width = (6 + Math.random() * 6) + 'px';
+        c.style.height = (6 + Math.random() * 6) + 'px';
+        c.style.animation = `confettiFall ${1 + Math.random() * 1.5}s ease-out ${Math.random() * 0.5}s forwards`;
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 3000);
+      }
+    }
+
+    // Dynamic Rendering of Levels based on Regional Risk Sorting
+    function renderDrillLevels() {
+      const mapContainer = document.getElementById('level-map');
+      if (!mapContainer) return;
+      mapContainer.innerHTML = '';
+
+      const level = playerData ? (playerData.current_level || 1) : 1;
+      const badges = (playerData ? playerData.badges_earned || '' : '').split(',').filter(Boolean);
+
+      activeDrillsList.forEach((drill, i) => {
+        const isUnlocked = i < level;
+        const isCompleted = badges.includes(drill.name);
+        const isCurrent = i === level - 1;
+
+        const btn = document.createElement('button');
+        btn.id = `level-${i+1}-btn`;
+        btn.className = `level-card w-full h-40 text-left ${isUnlocked ? '' : 'locked'} ${isCurrent ? 'current-level' : ''}`;
+        btn.onclick = () => startDrill(i);
+
+        const badgeHtml = isCompleted 
+          ? '<span class="bg-green-500 text-white font-bold px-2 py-0.5 rounded-lg text-xs">✅ Complete</span>'
+          : isUnlocked 
+            ? `<span class="bg-yellow-400 text-black font-bold px-2 py-0.5 rounded-lg text-xs">Level ${i+1}</span>`
+            : '<span class="bg-gray-600 text-white font-bold px-2 py-0.5 rounded-lg text-xs">🔒 Locked</span>';
+
+        btn.innerHTML = `
+          <div class="level-icon icon-badge-3d"><i data-lucide="${drill.icon}" class="w-6 h-6 text-amber-400"></i></div>
+          <div class="level-badge">${badgeHtml}</div>
+          <img class="absolute inset-0 w-full h-full object-cover" loading="lazy" src="${drill.image}" alt="${drill.name}">
+          <div class="level-card-content absolute bottom-0 left-0 right-0 p-4">
+            <h3 class="text-xl font-bold text-white">${drill.name}</h3>
+            <p class="text-white/60 text-sm">5 Questions • ${drill.desc}</p>
+          </div>
+        `;
+        mapContainer.appendChild(btn);
+      });
+
+      if (window.lucide) lucide.createIcons();
+      init3DCards();
+    }
+
+    function updateUI() {
+      if (!playerData) return;
+      document.getElementById('player-greeting').textContent = `Cadet ${playerData.player_name} 🎖️`;
+      
+      const scoreEl = document.getElementById('score-display');
+      animateNumber(scoreEl, 0, playerData.total_score || 0, 800);
+
+      const progress = ((playerData.drills_completed || 0) / 5) * 100;
+      document.getElementById('progress-bar').style.width = progress + '%';
+      document.getElementById('progress-text').textContent = `${playerData.drills_completed || 0}/5 Drills`;
+      const badges = (playerData.badges_earned || '').split(',').filter(Boolean);
+
+      renderDrillLevels();
+
+      const bd = document.getElementById('badges-display');
+      bd.innerHTML = '';
+      badges.forEach(b => {
+        const d = activeDrillsList.find(drill => drill.name === b) || baseDrills[b];
+        const div = document.createElement('div');
+        div.className = 'w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center';
+        div.innerHTML = `<i data-lucide="${d?.icon || 'award'}" class="w-4 h-4 text-amber-400"></i>`;
+        bd.appendChild(div);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderTeacherDashboard() {
+      const students = allData.filter(d => d.role === 'student');
+      const totalStudents = students.length;
+      const totalScore = students.reduce((s, d) => s + (d.total_score || 0), 0);
+      const avgScore = totalStudents ? Math.round(totalScore / totalStudents) : 0;
+      const totalBadges = students.reduce((s, d) => s + (d.badges_earned || '').split(',').filter(Boolean).length, 0);
+      const totalDrills = students.reduce((s, d) => s + (d.drills_completed || 0), 0);
+
+      animateNumber(document.getElementById('stat-students'), 0, totalStudents, 800);
+      animateNumber(document.getElementById('stat-avg-score'), 0, avgScore, 800);
+      animateNumber(document.getElementById('stat-badges'), 0, totalBadges, 800);
+      animateNumber(document.getElementById('stat-drills'), 0, totalDrills, 800);
+
+      const breakdown = document.getElementById('drill-breakdown');
+      breakdown.innerHTML = '';
+      Object.values(baseDrills).forEach((drill, i) => {
+        const completed = students.filter(d => (d.badges_earned || '').includes(drill.name)).length;
+        const pct = totalStudents ? Math.round((completed / totalStudents) * 100) : 0;
+        const row = document.createElement('div');
+        row.className = 'drill-rate-row fade-in';
+        row.style.animationDelay = (i * 0.1) + 's';
+        row.innerHTML = `<div class="flex justify-between text-sm text-white/80 mb-1 flex items-center gap-2"><span><i data-lucide="${drill.icon}" class="inline w-4 h-4 text-amber-400 mr-1.5"></i>${drill.name}</span><span>${completed}/${totalStudents} (${pct}%)</span></div><div class="stat-bar"><div class="stat-bar-fill bg-gradient-to-r from-yellow-400 to-orange-500" style="width:${pct}%"></div></div>`;
+        breakdown.appendChild(row);
+      });
+
+      const lb = document.getElementById('leaderboard');
+      lb.innerHTML = '';
+      const sorted = [...students].sort((a, b) => (b.total_score || 0) - (a.total_score || 0)).slice(0, 10);
+      sorted.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between bg-white/5 rounded-lg px-3 py-2 slide-in';
+        row.style.animationDelay = (i * 0.05) + 's';
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+        row.innerHTML = `<span class="text-white/80 font-medium">${medal} Cadet ${s.player_name}</span><span class="text-yellow-300 font-bold">${s.total_score || 0} pts</span>`;
+        lb.appendChild(row);
+      });
+      if (sorted.length === 0) lb.innerHTML = '<p class="text-white/40 text-center text-sm">No students registered yet</p>';
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    document.getElementById('name-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('player-name-input').value.trim();
+      if (!name) return;
+
+      let existing = allData.find(d => d.player_name === name && d.role === selectedRole);
+      if (existing) {
+        playerData = existing;
+      } else {
+        playerData = {
+          player_name: name,
+          current_level: 1,
+          total_score: 0,
+          badges_earned: '',
+          drills_completed: 0,
+          role: selectedRole,
+          region: selectedRegion,
+          coordinates: userCoordinates
+        };
+        allData.push(playerData);
+        saveState();
+      }
+
+      const heroBox = document.getElementById('hero-logo-box');
+      if (heroBox) heroBox.style.display = 'none';
+
+      if (selectedRole === 'teacher') {
+        document.getElementById('teacher-greeting').textContent = `Welcome, Instructor ${name} 🫡`;
+        showScreen('teacher-screen');
+        renderTeacherDashboard();
+      } else {
+        showGameScreen();
+      }
+    });
+
+    function showScreen(id) {
+      ['welcome-screen','game-screen','drill-screen','results-screen','teacher-screen'].forEach(s => document.getElementById(s).classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+      const m = document.getElementById('mascot');
+      if (id === 'drill-screen') {
+        m.classList.remove('hidden');
+      } else {
+        m.classList.add('hidden');
+      }
+    }
+
+    function showGameScreen() {
+      if (!playerData) {
+        showScreen('welcome-screen');
+        const heroBox = document.getElementById('hero-logo-box');
+        if (heroBox) heroBox.style.display = 'flex';
+        return;
+      }
+      showScreen('game-screen');
+      updateUI();
+    }
+
+    function logoutTeacher() {
+      playerData = null;
+      showScreen('welcome-screen');
+      const heroBox = document.getElementById('hero-logo-box');
+      if (heroBox) heroBox.style.display = 'flex';
+    }
+
+    function startDrill(idx) {
+      const level = playerData ? (playerData.current_level || 1) : 1;
+      if (idx >= level) return;
+      currentDrill = idx;
+      currentQ = 0;
+      drillScore = 0;
+      comboCount = 0;
+      showScreen('drill-screen');
+      setMascot('idle', "Attention Cadet! Commencing Drill! 🫡");
+      renderQuestion();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderQuestion() {
+      const drill = activeDrillsList[currentDrill];
+      const q = drill.questions[currentQ];
+      const total = drill.questions.length;
+
+      document.getElementById('drill-question-num').textContent = `${currentQ + 1}/${total}`;
+      document.getElementById('drill-progress').style.width = ((currentQ) / total * 100) + '%';
+      document.getElementById('drill-question').textContent = q.q;
+      document.getElementById('drill-feedback').classList.add('hidden');
+      document.getElementById('drill-next-btn').classList.add('hidden');
+
+      const comboBanner = document.getElementById('combo-banner');
+      if (comboCount >= 2) {
+        comboBanner.innerHTML = `<i data-lucide="flame" class="w-4 h-4 inline"></i> ${comboCount}x STREAK!`;
+        comboBanner.classList.remove('hidden');
+      } else {
+        comboBanner.classList.add('hidden');
+      }
+
+      const opts = document.getElementById('drill-options');
+      opts.innerHTML = '';
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'slide-in w-full text-left px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium transition border border-white/20';
+        btn.style.animationDelay = (i * 0.08) + 's';
+        btn.textContent = opt;
+        btn.onclick = (e) => selectAnswer(i, e);
+        opts.appendChild(btn);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function selectAnswer(idx, e) {
+      const q = activeDrillsList[currentDrill].questions[currentQ];
+      const opts = document.getElementById('drill-options').children;
+      for (let btn of opts) btn.onclick = null;
+      
+      const fb = document.getElementById('drill-feedback');
+      const screen = document.getElementById('drill-screen');
+
+      if (idx === q.correct) {
+        comboCount++;
+        drillScore += 10;
+        opts[idx].classList.add('!bg-green-500/40', '!border-green-400');
+        fb.textContent = `✅ Correct! +10 pts ${comboCount >= 2 ? `(${comboCount}x Combo!)` : ''}`;
+        fb.className = 'mt-4 p-4 rounded-xl text-center font-bold text-lg bg-green-500/20 text-green-300 fade-in';
+        screen.classList.add('correct-flash');
+        setTimeout(() => screen.classList.remove('correct-flash'), 600);
+        setMascot('happy', happyPhrases[Math.floor(Math.random() * happyPhrases.length)]);
+        if (e) spawnParticles(e.clientX, e.clientY);
+      } else {
+        comboCount = 0;
+        opts[idx].classList.add('!bg-red-500/40', '!border-red-400', 'shake');
+        opts[q.correct].classList.add('!bg-green-500/40', '!border-green-400');
+        fb.textContent = '❌ Incorrect! Protocol highlighted above.';
+        fb.className = 'mt-4 p-4 rounded-xl text-center font-bold text-lg bg-red-500/20 text-red-300 fade-in';
+        screen.classList.add('wrong-flash');
+        setTimeout(() => screen.classList.remove('wrong-flash'), 600);
+        setMascot('sad', sadPhrases[Math.floor(Math.random() * sadPhrases.length)]);
+      }
+
+      fb.classList.remove('hidden');
+      document.getElementById('drill-next-btn').classList.remove('hidden');
+      document.getElementById('drill-progress').style.width = (((currentQ + 1) / activeDrillsList[currentDrill].questions.length) * 100) + '%';
+    }
+
+    function nextQuestion() {
+      currentQ++;
+      if (currentQ < activeDrillsList[currentDrill].questions.length) {
+        renderQuestion();
+      } else {
+        finishDrill();
+      }
+    }
+
+    function finishDrill() {
+      const drillName = activeDrillsList[currentDrill].name;
+      const badges = (playerData.badges_earned || '').split(',').filter(Boolean);
+      const perfect = drillScore === 50;
+      const newBadge = !badges.includes(drillName) && drillScore >= 30;
+
+      if (newBadge) badges.push(drillName);
+      const newLevel = Math.min(5, Math.max(playerData.current_level || 1, currentDrill + 2));
+
+      playerData.total_score = (playerData.total_score || 0) + drillScore;
+      playerData.current_level = newLevel;
+      playerData.badges_earned = badges.join(',');
+      playerData.drills_completed = Math.min(5, badges.length);
+
+      saveState();
+      showScreen('results-screen');
+      if (perfect) spawnConfetti();
+
+      document.getElementById('results-score').textContent = `+${drillScore} points`;
+      document.getElementById('results-message').textContent = perfect 
+        ? "OUTSTANDING DRILL! Perfect Score, Soldier!" 
+        : drillScore >= 30 
+          ? 'Great tactics! Medal awarded!' 
+          : 'Keep practising to earn the badge (need 30+ pts).';
+
+      if (newBadge) {
+        document.getElementById('results-badge-earned').classList.remove('hidden');
+        document.getElementById('new-badge-icon').innerHTML = `<i data-lucide="${activeDrillsList[currentDrill].icon}" class="w-8 h-8 text-slate-900"></i>`;
+      } else {
+        document.getElementById('results-badge-earned').classList.add('hidden');
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function exitDrill() {
+      showGameScreen();
+    }
+
+    // Global Bindings
+    window.selectRole = selectRole;
+    window.changeRegion = changeRegion;
+    window.getPreciseGPSLocation = getPreciseGPSLocation;
+    window.showSOSModal = showSOSModal;
+    window.hideSOSModal = hideSOSModal;
+    window.startDrill = startDrill;
+    window.nextQuestion = nextQuestion;
+    window.showGameScreen = showGameScreen;
+    window.exitDrill = exitDrill;
+    window.logoutTeacher = logoutTeacher;
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
